@@ -45,6 +45,7 @@ private[spark] abstract class EventLoop[E](name: String) extends Logging {
         while (!stopped.get) {
           val event = eventQueue.take()
           try {
+	          // DAGSchedulerEventProcessLoop
             onReceive(event)
           } catch {
             case NonFatal(e) =>
@@ -97,6 +98,7 @@ private[spark] abstract class EventLoop[E](name: String) extends Logging {
 
   /**
    * Put the event into the event queue. The event thread will process it later.
+    * eventThread 守护线程将对队列中event进行处理
    */
   def post(event: E): Unit = {
     eventQueue.put(event)
