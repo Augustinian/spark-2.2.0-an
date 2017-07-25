@@ -295,6 +295,7 @@ private[spark] class Executor(
       Thread.currentThread.setContextClassLoader(replClassLoader)
       val ser = env.closureSerializer.newInstance()
       logInfo(s"Running $taskName (TID $taskId)")
+      // 向Driver 终端点发送任务运行开始消息
       execBackend.statusUpdate(taskId, TaskState.RUNNING, EMPTY_BYTE_BUFFER)
       var taskStart: Long = 0
       var taskStartCpu: Long = 0
@@ -426,6 +427,7 @@ private[spark] class Executor(
         }
 
         setTaskFinishedAndClearInterruptStatus()
+        // 向 Driver 终端点发送任务运行完毕消息
         execBackend.statusUpdate(taskId, TaskState.FINISHED, serializedResult)
 
       } catch {

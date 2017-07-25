@@ -105,6 +105,7 @@ private[spark] abstract class Task[T](
       Option(attemptNumber)).setCurrentContext()
 
     try {
+      // 动态调用子类的ShuffleMapTask和ResultTask的runTask方法
       runTask(context)
     } catch {
       case e: Throwable =>

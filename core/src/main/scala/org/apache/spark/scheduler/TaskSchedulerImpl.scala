@@ -202,6 +202,7 @@ private[spark] class TaskSchedulerImpl private[scheduler](
         throw new IllegalStateException(s"more than one active taskSet for stage $stage:" +
           s" ${stageTaskSets.toSeq.map{_._2.taskSet.id}.mkString(",")}")
       }
+      // 将该任务集的管理器加入到系统调度池中，由系统统一调配，该调度器属于应用级别，支持FIFO和FAIR两种
       schedulableBuilder.addTaskSetManager(manager, manager.taskSet.properties)
 
       if (!isLocal && !hasReceivedTask) {

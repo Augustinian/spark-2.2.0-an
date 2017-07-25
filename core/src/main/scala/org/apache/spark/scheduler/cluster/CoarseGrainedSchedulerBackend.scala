@@ -228,12 +228,14 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     // Make fake resource offers on all executors
     private def makeOffers() {
       // Make sure no executor is killed while some task is launching on it
+      // 获取集群中可用的Executor列表
       val taskDescs = CoarseGrainedSchedulerBackend.this.synchronized {
         // Filter out executors under killing
         val activeExecutors = executorDataMap.filterKeys(executorIsAlive)
         val workOffers = activeExecutors.map { case (id, executorData) =>
           new WorkerOffer(id, executorData.executorHost, executorData.freeCores)
         }.toIndexedSeq
+        // 对任务集的任务分配运行资源行
         scheduler.resourceOffers(workOffers)
       }
       if (!taskDescs.isEmpty) {
@@ -276,6 +278,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     // Launch tasks returned by a set of resource offers
     private def launchTasks(tasks: Seq[Seq[TaskDescription]]) {
       for (task <- tasks.flatten) {
+        // 序列化每一个task
         val serializedTask = TaskDescription.encode(task)
         if (serializedTask.limit >= maxRpcMessageSize) {
           scheduler.taskIdToTaskSetManager.get(task.taskId).foreach { taskSetMgr =>
@@ -297,6 +300,8 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
           logDebug(s"Launching task ${task.taskId} on executor id: ${task.executorId} hostname: " +
             s"${executorData.executorHost}.")
 
+          // 向Worker 节点的CoarseGrainedExecutorBackend 发送消息执行 Task
+          // 当 CoarseGrainedExecutorBackend 接受到 LaunchTask 消息时，会调用Executor 的 launchTask
           executorData.executorEndpoint.send(LaunchTask(new SerializableBuffer(serializedTask)))
         }
       }
@@ -431,6 +436,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
   }
 
   override def reviveOffers() {
+    // 向DriverEndPoint 终端发送信息，调用其 makeOffers方法
     driverEndpoint.send(ReviveOffers)
   }
 
